@@ -339,7 +339,7 @@ def transfer(sota, node, information_id: int = None, root: bool = False, hardcod
             })]
             new_id = sota.get_new_id(sota.information)
             sota.information[new_id] = new_info
-            sota.information[sota.mother_id].sections.append(new_id)
+            sota.information[sota.mother_id].versions[-1].sections.append(new_id)
         else:
             # Process each child section
             for n in node.contents:
