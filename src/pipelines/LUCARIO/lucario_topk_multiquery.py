@@ -1,11 +1,13 @@
 
 
-from typing import Any, List 
+from typing import Any, List
 import os
 import requests
 import json
-from custom_types.JSONL.type import JSONL
+import logging
 import traceback
+
+from custom_types.JSONL.type import JSONL
 
 
 class Pipeline:
@@ -33,12 +35,12 @@ class Pipeline:
 
     
     def __call__(self, queries: JSONL) -> JSONL:
-
+        query_list = [line['query'] for line in queries.lines]
+        logging.info("Lucario topk_multiquery: project_id=%s, n_queries=%s", self.project_id, len(query_list))
         super_chunk_list = []
-         
-        try:
 
-            for query in [line['query'] for line in queries.lines]:
+        try:
+            for query in query_list:
 
                 json_payload = {
                     "project_id": self.project_id,
@@ -80,9 +82,10 @@ class Pipeline:
 
                 } for item in super_chunk_list_no_dups
             ]
-
+            logging.info("Lucario topk_multiquery done: project_id=%s, n_chunks=%s", self.project_id, len(json_out))
             return JSONL(json_out)
-        except:
+        except Exception:
             error_message = traceback.format_exc()
+            logging.warning("Lucario topk_multiquery failed: project_id=%s, error=%s", self.project_id, error_message[:200])
             print(error_message)
-            raise Exception(error_message)
+            raise

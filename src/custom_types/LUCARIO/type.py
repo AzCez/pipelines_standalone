@@ -10,6 +10,7 @@ from time import sleep, time
 import os
 from io import BytesIO
 import httpx
+import logging
 
 class FileTypes(str, Enum):
     txt = "txt"
@@ -108,7 +109,8 @@ class LUCARIO(BaseModel):
             r = client.post(f'{self.url}/upload', data=data, files=files, headers=headers)
             if r.status_code != 200:
                 raise ValueError(f'Error: {r.text}')
-    
+        logging.info("Lucario upload: project_id=%s, file_name=%s", self.project_id, file_name)
+
     def update(self):
         self.elements = {}
         self.uuid_2_position = {}
@@ -222,8 +224,10 @@ class LUCARIO(BaseModel):
             headers=headers,
         )
         result = response.json()
-        return cls(url = url, project_id = result['key']['value'])
-    
+        project_id = result['key']['value']
+        logging.info("Lucario project created: project_id=%s", project_id)
+        return cls(url=url, project_id=project_id)
+
 class Converter:
     @staticmethod
     def to_bytes(obj : LUCARIO) -> bytes:

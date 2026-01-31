@@ -1,3 +1,5 @@
+import json
+import logging
 from custom_types.PROMPT.type import PROMPT
 from custom_types.LUCARIO.type import LUCARIO
 
@@ -13,8 +15,8 @@ class Pipeline:
         self.elements_per_group = elements_per_group
         self.min_elements_per_list = min_elements_per_list
 
-    def __call__(self, 
-                lucario : LUCARIO
+    def __call__(self,
+                lucario: LUCARIO
                 ) -> PROMPT:
         lucario.update()
         res = lucario.anchored_top_k(
@@ -40,4 +42,5 @@ class Pipeline:
         prompt = '\n\n=================================\n\n'.join(prompt)
         p = PROMPT()
         p.add(prompt, role='user')
+        logging.info("Lucario prompt_output done: project_id=%s", lucario.project_id)
         return p

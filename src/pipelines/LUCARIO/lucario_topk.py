@@ -3,10 +3,11 @@
 
 
 
-from typing import Any, List 
+from typing import Any, List
 import os
 import requests
 import json
+import logging
 
 from custom_types.JSONL.type import JSONL
 
@@ -36,7 +37,7 @@ class Pipeline:
 
     
     def __call__(self, query_text: str) -> JSONL:
-
+        logging.info("Lucario topk: project_id=%s, query_text=%s", self.project_id, query_text[:80] + "..." if len(query_text) > 80 else query_text)
         json_payload = {
             "project_id": self.project_id,
             "query_text": query_text,
@@ -60,8 +61,7 @@ class Pipeline:
 
                 } for item in json_out
             ]
-
-
+        logging.info("Lucario topk done: project_id=%s, n_chunks=%s", self.project_id, len(json_out))
         return JSONL(json_out)
         
 
