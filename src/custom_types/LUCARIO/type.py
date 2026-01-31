@@ -148,9 +148,10 @@ class LUCARIO(BaseModel):
             anticipated = [d for d in self.elements.values() if d.pipeline_status == PipelineStatus.anticipated]
             elapsed = time() - t0
             if int(elapsed) % 30 < 5 and int(elapsed) >= 5:
+                pending_ids = [d.file_id for d in pending] if pending else []
                 logging.info(
-                    "wait_for_pendings: project_id=%s, pending=%s, retrying=%s, anticipated=%s, elapsed=%.0fs",
-                    self.project_id, len(pending), len(retrying), len(anticipated), elapsed,
+                    "wait_for_pendings: project_id=%s, pending=%s, retrying=%s, anticipated=%s, elapsed=%.0fs, pending_file_ids=%s",
+                    self.project_id, len(pending), len(retrying), len(anticipated), elapsed, pending_ids,
                 )
             sleep(5)
             if elapsed > max_wait:
