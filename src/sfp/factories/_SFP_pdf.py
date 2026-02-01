@@ -10,4 +10,4 @@ class Pipeline:
         dataset_id = metadata['dataset_id']
         file, = SQL_F1('SELECT "file_contents" FROM "DatasetsFiles" WHERE "dataset_id" = %s AND "file_name" = %s', (dataset_id, file_name))
         file = bytes(file)
-        return self.converter.from_bytes(file)
+        return PDF(file, file_name)
