@@ -126,17 +126,43 @@ class LUCARIO(BaseModel):
         response = [Document.parse_obj(_) for _ in response.json()]
         for document in response:
             self.add_document(document)
-            
+        logging.info("Lucario overview: project_id=%s, n_documents=%s", self.project_id, len(self.elements))
+
     def wait_for_pendings(self, max_wait: int = 200):
+        """Wait until all documents are in a terminal state (success or error)."""
         sleep(5)
         t0 = time()
+        done_statuses = {PipelineStatus.success, PipelineStatus.error}
         while True:
             self.update()
-            if all([document.pipeline_status != PipelineStatus.pending for document in self.elements.values()]):
+            if all(d.pipeline_status in done_statuses for d in self.elements.values()):
+                n_success = sum(1 for d in self.elements.values() if d.pipeline_status == PipelineStatus.success)
+                n_error = sum(1 for d in self.elements.values() if d.pipeline_status == PipelineStatus.error)
+                logging.info(
+                    "wait_for_pendings done: project_id=%s, n_success=%s, n_error=%s, elapsed=%.0fs",
+                    self.project_id, n_success, n_error, time() - t0,
+                )
                 break
+            pending = [d for d in self.elements.values() if d.pipeline_status == PipelineStatus.pending]
+            retrying = [d for d in self.elements.values() if d.pipeline_status == PipelineStatus.retrying]
+            anticipated = [d for d in self.elements.values() if d.pipeline_status == PipelineStatus.anticipated]
+            elapsed = time() - t0
+            if int(elapsed) % 30 < 5 and int(elapsed) >= 5:
+                pending_ids = [d.file_id for d in pending] if pending else []
+                logging.info(
+                    "wait_for_pendings: project_id=%s, pending=%s, retrying=%s, anticipated=%s, elapsed=%.0fs, pending_file_ids=%s",
+                    self.project_id, len(pending), len(retrying), len(anticipated), elapsed, pending_ids,
+                )
             sleep(5)
-            if time() - t0 > max_wait:
-                raise ValueError('Timeout')
+            if elapsed > max_wait:
+                msg = (
+                    f'Timeout after {elapsed:.0f}s (max_wait={max_wait}s). '
+                    f'{len(pending)} document(s) still pending.'
+                )
+                if pending:
+                    msg += f' Pending file_ids: {[d.file_id for d in pending]}.'
+                logging.warning(msg)
+                raise ValueError(msg)
             
     def fetch_single(self, local_document_identifier, local_chunk_identifier) -> Document:
         response = requests.get(
